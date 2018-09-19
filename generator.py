@@ -57,7 +57,7 @@ class SpreadsheetGenerator:
         self.formats = dict([(k, self.workbook.add_format(v)) for k, v in self.raw_formats.items()])
 
         db = sqlite3.connect(self.db_path)
-        self.headers = json.load(open('headers.json'))
+        self.headers = json.load(open('headers.json', "r", "utf-8"))
         self.event = db.execute('SELECT * FROM events WHERE id = "{}"'.format(event_id)).fetchone()
         self.raw_entries = [json.loads(e[-2]) for e in
                             db.execute('SELECT * FROM scouting_entries WHERE event = "{}"'.format(event_id)).fetchall()]

@@ -3,6 +3,7 @@ import json
 import shutil
 import os
 import time
+import re
 
 import cv2
 import numpy as np
@@ -12,7 +13,6 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import requests
 
-from generator import SpreadsheetGenerator
 from runners import Runner
 from scanners.scanner import Scanner
 from tba_py import TBA
@@ -73,11 +73,11 @@ class ScanView(QMainWindow):
 
         self.scanner = Scanner(self.field_list, self.config, self.scan_dir + "images/")
 
-        self.generator = SpreadsheetGenerator('db.sqlite', self.tba)
-        self.generator_runner = Runner('Generator', self.update_spreadsheet)
+        #self.generator = SpreadsheetGenerator('db.sqlite', self.tba)
+        #self.generator_runner = Runner('Generator', self.update_spreadsheet)
         self.last_updated = time.time()
         self.should_update_again = False
-        self.generator_runner.run(run_anyway=True)
+        #self.generator_runner.run(run_anyway=True)
 
         self.backup_img = np.zeros((1, 1, 3), np.uint8)
         self.img = np.zeros((1, 1, 3), np.uint8)
@@ -94,6 +94,8 @@ class ScanView(QMainWindow):
         self.show()
 
     def update_spreadsheet(self, delay=30, run_anyway=False):
+        return
+        '''
         time_delta = time.time() - self.last_updated
         if time_delta > 60 or run_anyway:
             last_update = self.last_updated
@@ -110,6 +112,7 @@ class ScanView(QMainWindow):
                 self.update_spreadsheet(run_anyway=True)
         else:
             self.should_update_again = True
+            '''
 
     def enable_inputs(self, enabled=('submit', 'reject', 'go_back', 'refresh', 'four', 'rotate', 'toggle', 'data')):
         self.submit_button.setEnabled('submit' in enabled)
@@ -186,21 +189,22 @@ class ScanView(QMainWindow):
 
     def check_data(self, data):
         errors = []
-        keys_to_check = ['team_number', 'match', 'pos']
+        keys_to_check = ['team_num', 'match', 'pos']
         for key in keys_to_check:
             if not (data[key] or data[key] in [False, 0]):
                 errors.append('missing_' + key)
         if self.teams:
-            if "frc{}".format(data['team_number']) not in self.teams:
+            if "frc{}".format(data['team_num']) not in self.teams:
                 errors.append('team_not_at_event')
         if self.matches:
             if data['match'] not in [e['match_number'] for e in self.matches]:
                 errors.append('match_number_not_at_event')
             alliance = 'red' if data['pos'] <= 2 else 'blue'
             expected_team = [e for e in self.matches if e['match_number'] == data['match'] and e['comp_level'] == 'qm'][0]['alliances'][alliance]['team_keys'][data['pos'] % 3]
-            if "frc{}".format(data['team_number']) != expected_team:
+            if "frc{}".format(data['team_num']) != expected_team:
                 errors.append('expected_different_team: {}'.format(expected_team))
-        return errors
+        # Overridden until dev is done.
+        return []
 
     def submit_scan(self):
         if self.img is None:
@@ -242,20 +246,23 @@ class ScanView(QMainWindow):
         data = {
             'filename': self.filename,
             'data': edited_data,
-            'team': int(edited_data["team_number"]),
+            'team': int(edited_data["team_num"]),
             'match': int(edited_data["match"]),
             'pos': int(edited_data["pos"]),
             'event': self.event_id
         }
 
         def post_func():
+            ## TODO: Convert to otr-scouting
             try:
                 requests.post('http://' + self.clooney_host + '/api/sql/add_entry', json=data)
             except Exception as ex:
                 print(ex)
         Runner(target=post_func).run()
-        self.generator_runner.run()
+        #self.generator_runner.run()
 
+        print(self.scan_dir + "\n")
+        print(self.filename)
         shutil.move(self.scan_dir.strip('\\') + self.filename, self.scan_dir + "Processed/" + self.filename)
         cv2.imwrite(self.scan_dir + "Marked/" + self.filename, self.img)
         self.get_new_scan()
@@ -265,7 +272,7 @@ class ScanView(QMainWindow):
         if self.img is None:
             return
         shutil.move(self.scan_dir + self.filename, self.scan_dir + "Rejected/" + self.filename)
-        self.generator_runner.run()
+        #self.generator_runner.run()
         self.get_new_scan()
 
     def set_img(self, cv_img):
@@ -343,7 +350,9 @@ class ScanView(QMainWindow):
             try:
                 files = glob.glob(self.scan_dir + "*jpg") + glob.glob(self.scan_dir + "*.png")
                 selected_file = files[0]
-                self.filename = selected_file.split("/")[-1]
+                split = re.split("[\\\\/]", selected_file)
+                self.filename = split[len(split)-1]
+                #self.filename = selected_file.split("/")[-1]
                 self.set_filepath_label_text(files[0])
                 raw_scan = cv2.imread(selected_file)
             except Exception as ex:

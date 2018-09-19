@@ -188,7 +188,7 @@ class Scanner(ScannerBase):
 
                 save_img = len(contours) > 4 or crop.mean() < 240
                 if save_img:
-                    filename = str(data["team_number"]) + "-" + str(data["encoded_match_data"]) + "_" + label + ".png"
+                    filename = str(data["team_num"]) + "-" + str(data["encoded_match_data"]) + "_" + label + ".png"
                     cv2.imwrite(self._img_dir + filename, crop)
 
                 if save_img or self.DEBUG_SHOW_ALL_BOXES:
@@ -199,6 +199,10 @@ class Scanner(ScannerBase):
         data["pos"] = int("0" + data["encoded_match_data"][-1])
         data.move_to_end("pos", last=False)
         data.move_to_end("match", last=False)
+
+
+        data["event"] = self._config["event"]
+        data["match_code"] = "2018_" + data["event"] + "_" + "q" + data["match"]
 
         del data["encoded_match_data"]
 
