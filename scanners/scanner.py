@@ -92,12 +92,15 @@ class Scanner(ScannerBase):
                         nums += "_"
                 data[label] = nums
             elif field_type == "Barcode":
-                digits = len(bin(int("9" * field["options"]["digits"]))[2:]) - 3
+                digits = len(bin(int("9" * field["options"]["digits"]))[2:])
+                print(label + " digits: " + str(digits))
                 x_offset = -box_size
                 values = []
                 for i in range(digits):
                     values.append(self._read_box(img2, scan_area, x_pos + x_offset, y_pos, box_size, box_size))
                     x_offset -= box_size + self._config['barcode_spacing']
+                print(label+ " values: ")
+                print(values)
                 number = "".join(["1" if e else "0" for e in values][::-1])
                 try:
                     data[label] = str(int(number, 2))
@@ -195,6 +198,8 @@ class Scanner(ScannerBase):
                     cv2.rectangle(scan_area, pt1, pt2, self._highlight_colour, thickness=3)
                 data[label] = str(save_img)
 
+        print("Match Data Encoded (position,match) " + str(data["encoded_match_data"]))
+        print("Team Number Encoded (teamNumber) " + str(data["team_number_encoded"]))
         data["match"] = int("0" + data["encoded_match_data"][0:-1])
         data["pos"] = int("0" + data["encoded_match_data"][-1])
         data.move_to_end("pos", last=False)
@@ -202,7 +207,7 @@ class Scanner(ScannerBase):
 
 
         data["event"] = self._config["event"]
-        data["match_code"] = "2018_" + data["event"] + "_" + "q" + data["match"]
+        data["match_code"] = "2018_" + str(data["event"]) + "_" + "q" + str(data["match"])
 
         del data["encoded_match_data"]
 

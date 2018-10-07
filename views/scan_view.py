@@ -60,10 +60,10 @@ class ScanView(QMainWindow):
 
         self.event_id = event_id
         self.data_filepath = data_file
-        self.config = json.load(open(self.config_file))
-        self.field_list = json.load(open(self.fields_file))
+        self.config = json.load(open(self.config_file, encoding="utf-8"))
+        self.field_list = json.load(open(self.fields_file, encoding="utf-8"))
         self.scan_dir = scan_dirpath
-        self.clooney_host = clooney_host
+        #self.clooney_host = clooney_host
 
         for sub_folder in ["Processed", "Rejected", "Marked", "images"]:
             if not os.path.isdir(self.scan_dir + sub_folder + "/"):
@@ -236,12 +236,12 @@ class ScanView(QMainWindow):
             self.enable_inputs()
             return
         try:
-            data = json.load(open(self.data_filepath))
+            data = json.load(open(self.data_filepath, encoding="utf-8"))
         except:
             data = []
 
         data.append(edited_data)
-        json.dump(data, open(self.data_filepath, "w+"))
+        json.dump(data, open(self.data_filepath, "w+", encoding="utf-8"))
 
         data = {
             'filename': self.filename,
@@ -252,13 +252,14 @@ class ScanView(QMainWindow):
             'event': self.event_id
         }
 
-        def post_func():
-            ## TODO: Convert to otr-scouting
-            try:
-                requests.post('http://' + self.clooney_host + '/api/sql/add_entry', json=data)
-            except Exception as ex:
-                print(ex)
-        Runner(target=post_func).run()
+        #def post_func():
+            #try:
+            #
+            #    requests.post('http://' + self.clooney_host + '/api/sql/add_entry', json=data)
+            #except Exception as ex:
+            #
+            #    print(ex)
+        #Runner(target=post_func).run()
         #self.generator_runner.run()
 
         print(self.scan_dir + "\n")
@@ -288,11 +289,16 @@ class ScanView(QMainWindow):
 
         for row in range(len(data)):
             key = list(data.keys())[row]
+            if key in ['event', 'match_code']:
+                print(data[key])
+                continue
+
             key_item = QTableWidgetItem(key)
             key_item.setFlags(key_item.flags() & Qt.ItemIsEditable)
             if key in ['match', 'pos']:
                 label_item = QTableWidgetItem(key.title())
             else:
+                #print(self.fields[key])
                 label_item = QTableWidgetItem(self.fields[key]['options']['label'])
             label_item.setFlags(label_item.flags() & Qt.ItemIsEditable)
             self.data_preview.setItem(row, 0, key_item)
@@ -317,8 +323,8 @@ class ScanView(QMainWindow):
                 self.data_preview.setItem(row, 2, QTableWidgetItem(str(data[key])))
 
     def look_for_scan(self):
-        self.config = json.load(open(self.config_file))
-        self.field_list = json.load(open(self.fields_file))
+        self.config = json.load(open(self.config_file, encoding="utf-8"))
+        self.field_list = json.load(open(self.fields_file, encoding="utf-8"))
         self.scanner.set_config(self.config)
         self.scanner.set_fields(self.field_list)
         self.enable_inputs([])
@@ -328,7 +334,7 @@ class ScanView(QMainWindow):
 
     def load_last_sheet(self):
         try:
-            data = json.load(open(self.data_filepath))
+            data = json.load(open(self.data_filepath, encoding="utf-8"))
         except:
             data = []
         if data:
@@ -342,7 +348,7 @@ class ScanView(QMainWindow):
             self.enable_inputs()
 
             data = data[:-1]
-            json.dump(data, open(self.data_filepath, "w+"))
+            json.dump(data, open(self.data_filepath, "w+", encoding="utf-8"))
 
     def get_new_scan(self, raw_scan=None):
         self.enable_inputs([])
