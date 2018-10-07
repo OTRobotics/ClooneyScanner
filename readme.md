@@ -1,4 +1,6 @@
-# Clooney Scanner
+# OTR Scouting Scanner
+---
+Heavily based on "Clooney Scanner" by Team 5406 with adaptations for automation/detailed json data.
 
 ## Settings
 ![asdf](https://raw.githubusercontent.com/kForth/ClooneyScanner/master/img/SettingsWindow.png)
@@ -8,3 +10,4 @@
 
 ## Sheet Adjustments
 ![asdf](https://raw.githubusercontent.com/kForth/ClooneyScanner/master/img/FixWindow.png)
+
