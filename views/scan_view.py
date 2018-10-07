@@ -317,7 +317,7 @@ class ScanView(QMainWindow):
                 c.addItems(self.scanner.POSITIONS)
                 if data[key] >= len(self.scanner.POSITIONS):
                     c.setCurrentIndex(0)
-                c.setCurrentIndex(data[key])
+                c.setCurrentIndex(data[key]-1)
                 self.data_preview.setCellWidget(row, 2, c)
             else:
                 self.data_preview.setItem(row, 2, QTableWidgetItem(str(data[key])))
